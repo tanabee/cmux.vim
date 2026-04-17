@@ -1,0 +1,93 @@
+*cmux.vim.txt*  Send file references from Vim to AI CLI via cmux
+
+Author:  tanabee
+License: MIT
+
+==============================================================================
+CONTENTS                                                 *cmux.vim-contents*
+
+  1. Introduction .................... |cmux.vim-introduction|
+  2. Commands ........................ |cmux.vim-commands|
+  3. Mappings ........................ |cmux.vim-mappings|
+  4. Configuration ................... |cmux.vim-configuration|
+
+==============================================================================
+1. Introduction                                      *cmux.vim-introduction*
+
+cmux.vim is a plugin for sending file information from Vim to AI CLI
+(Claude Code / Gemini CLI) as @mention references when using them side by
+side on cmux.
+
+The target AI CLI surface is auto-detected.
+
+==============================================================================
+2. Commands                                            *cmux.vim-commands*
+
+                                                              *:CmuxSendFile*
+:CmuxSendFile
+        Send the current file path to AI CLI as an @mention reference.
+        Example: `@src/main.ts `
+
+                                                               *:CmuxSendPos*
+:CmuxSendPos
+        Send the current file path with cursor line number.
+        Example: `@src/main.ts:L42 `
+
+                                                             *:CmuxSendRange*
+:'<,'>CmuxSendRange
+        Send the visually selected line range with file path.
+        Example: `@src/main.ts:L42-55 `
+
+                                                               *:CmuxDetect*
+:CmuxDetect
+        Scan all cmux surfaces and auto-detect the one running AI CLI
+        (Claude Code / Gemini CLI), then set it as the send target.
+
+                                                            *:CmuxSetSurface*
+:CmuxSetSurface
+        Manually enter and set the target surface ID.
+        Use this when auto-detection does not work.
+
+==============================================================================
+3. Mappings                                            *cmux.vim-mappings*
+
+Default key mappings (only active when the user has not defined <Plug>
+mappings):
+
+  <C-s>         Normal mode       |:CmuxSendFile|
+  <C-s>         Visual mode       |:CmuxSendRange|
+
+If you define <Plug> mappings in your .vimrc, the default <C-s> bindings
+are automatically disabled: >
+
+  nmap <C-\> <Plug>(cmux-send-file)
+  nmap <C-g> <Plug>(cmux-send-pos)
+  vmap <C-\> <Plug>(cmux-send-range)
+<
+
+==============================================================================
+4. Configuration                                  *cmux.vim-configuration*
+
+                                                           *g:cmux_surface*
+g:cmux_surface
+        The target cmux surface ID. Usually auto-detected, but can also be
+        set manually.
+        Default: '' (unset)
+>
+        let g:cmux_surface = 'surface:2'
+<
+                                                          *g:cmux_cli_name*
+g:cmux_cli_name
+        The name of the detected AI CLI. Set during auto-detection.
+        Value: 'Claude Code' or 'Gemini CLI'
+
+                                                        *g:cmux_auto_enter*
+g:cmux_auto_enter
+        Whether to automatically press Enter after sending.
+        Default: 0 (disabled)
+>
+        let g:cmux_auto_enter = 1
+<
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
