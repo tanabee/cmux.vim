@@ -37,14 +37,7 @@ function! cmux#detect()
     return
   endif
 
-  " Extract surface:N patterns from tree output
-  let l:surface_refs = []
-  for l:line in split(l:tree_output, '\n')
-    let l:matches = matchlist(l:line, '\(surface:[0-9]\+\)')
-    if !empty(l:matches)
-      call add(l:surface_refs, l:matches[1])
-    endif
-  endfor
+  let l:surface_refs = map(cmux#_parse_tree(l:tree_output), 'v:val[1]')
 
   for l:sid in l:surface_refs
     " Skip own surface
@@ -53,7 +46,7 @@ function! cmux#detect()
     endif
 
     " Read the latest 30 lines from the screen
-    let l:screen = system('cmux read-screen --surface ' . l:sid . ' --lines 30')
+    let l:screen = system('cmux read-screen --surface ' . shellescape(l:sid) . ' --lines 30')
     if v:shell_error != 0
       continue
     endif
@@ -94,7 +87,7 @@ function! cmux#_get_relative_path()
   let l:abs_path = expand('%:p')
   let l:git_root = trim(system('git rev-parse --show-toplevel 2>/dev/null'))
   if v:shell_error == 0 && l:git_root !=# ''
-    return substitute(l:abs_path, '^' . escape(l:git_root . '/', '/.'), '', '')
+    return substitute(l:abs_path, '\V' . escape(l:git_root . '/', '\'), '', '')
   endif
   return l:abs_path
 endfunction
@@ -112,12 +105,12 @@ function! cmux#_send_ref(path, line_info)
   endif
 
   " Clear the input field before sending (overwrite previous reference)
-  call system('cmux send-key --surface ' . l:surface . ' ctrl+u')
+  call system('cmux send-key --surface ' . shellescape(l:surface) . ' ctrl+u')
 
   " Send @filepath + line info together
   let l:text = '@' . a:path . a:line_info . ' '
   let l:escaped = shellescape(l:text)
-  call system('cmux send --surface ' . l:surface . ' ' . l:escaped)
+  call system('cmux send --surface ' . shellescape(l:surface) . ' ' . l:escaped)
 
   if v:shell_error != 0
     echohl ErrorMsg
@@ -128,7 +121,7 @@ function! cmux#_send_ref(path, line_info)
 
   " Also send Enter key if auto_enter is enabled
   if get(g:, 'cmux_auto_enter', 0)
-    call system('cmux send-key --surface ' . l:surface . ' enter')
+    call system('cmux send-key --surface ' . shellescape(l:surface) . ' enter')
   endif
 
   " Focus the target surface pane if auto_focus is enabled
@@ -147,17 +140,27 @@ function! cmux#_focus_surface(surface)
     return
   endif
 
-  " Walk tree output to find the pane that contains the target surface
-  let l:current_pane = ''
-  for l:line in split(l:tree_output, '\n')
-    let l:pane_match = matchlist(l:line, '\(pane:[0-9]\+\)')
-    if !empty(l:pane_match)
-      let l:current_pane = l:pane_match[1]
-    endif
-    let l:surface_match = matchlist(l:line, '\(surface:[0-9]\+\)')
-    if !empty(l:surface_match) && l:surface_match[1] ==# a:surface && l:current_pane !=# ''
-      call system('cmux focus-pane --pane ' . l:current_pane)
+  for [l:pane, l:sid] in cmux#_parse_tree(l:tree_output)
+    if l:sid ==# a:surface
+      call system('cmux focus-pane --pane ' . shellescape(l:pane))
       return
     endif
   endfor
+endfunction
+
+" Parse `cmux tree` output into a list of [pane, surface] pairs
+function! cmux#_parse_tree(output)
+  let l:entries = []
+  let l:current_pane = ''
+  for l:line in split(a:output, '\n')
+    let l:pane = matchstr(l:line, 'pane:[0-9]\+')
+    if l:pane !=# ''
+      let l:current_pane = l:pane
+    endif
+    let l:surface = matchstr(l:line, 'surface:[0-9]\+')
+    if l:surface !=# '' && l:current_pane !=# ''
+      call add(l:entries, [l:current_pane, l:surface])
+    endif
+  endfor
+  return l:entries
 endfunction
