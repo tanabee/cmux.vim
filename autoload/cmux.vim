@@ -52,7 +52,7 @@ function! cmux#detect()
     endif
 
     " Detect Claude Code specific patterns
-    if l:screen =~# '\vclaude|Claude Code|anthropic|opus|sonnet|haiku|\/help|╭|╰'
+    if l:screen =~# '\vclaude|Claude Code|anthropic|\/help|╭|╰'
       let g:cmux_surface = l:sid
       let g:cmux_cli_name = 'Claude Code'
       echo 'cmux.vim: Detected Claude Code -> ' . l:sid
@@ -60,7 +60,7 @@ function! cmux#detect()
     endif
 
     " Detect Gemini CLI specific patterns
-    if l:screen =~# '\vgemini|Gemini|google|✦'
+    if l:screen =~# '\vgemini|Gemini|✦'
       let g:cmux_surface = l:sid
       let g:cmux_cli_name = 'Gemini CLI'
       echo 'cmux.vim: Detected Gemini CLI -> ' . l:sid
