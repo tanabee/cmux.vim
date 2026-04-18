@@ -131,6 +131,33 @@ function! cmux#_send_ref(path, line_info)
     call system('cmux send-key --surface ' . l:surface . ' enter')
   endif
 
+  " Focus the target surface pane if auto_focus is enabled
+  if get(g:, 'cmux_auto_focus', 1)
+    call cmux#_focus_surface(l:surface)
+  endif
+
   redraw
   echo 'cmux.vim: Sent -> @' . a:path . a:line_info
+endfunction
+
+" Focus the pane containing the given surface
+function! cmux#_focus_surface(surface)
+  let l:tree_output = system('cmux tree')
+  if v:shell_error != 0
+    return
+  endif
+
+  " Walk tree output to find the pane that contains the target surface
+  let l:current_pane = ''
+  for l:line in split(l:tree_output, '\n')
+    let l:pane_match = matchlist(l:line, '\(pane:[0-9]\+\)')
+    if !empty(l:pane_match)
+      let l:current_pane = l:pane_match[1]
+    endif
+    let l:surface_match = matchlist(l:line, '\(surface:[0-9]\+\)')
+    if !empty(l:surface_match) && l:surface_match[1] ==# a:surface && l:current_pane !=# ''
+      call system('cmux focus-pane --pane ' . l:current_pane)
+      return
+    endif
+  endfor
 endfunction

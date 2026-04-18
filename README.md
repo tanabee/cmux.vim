@@ -53,6 +53,9 @@ The AI CLI surface is auto-detected on the first invocation.
 " Manually specify target surface (usually not needed due to auto-detection)
 let g:cmux_surface = 'surface:2'
 
+" Automatically focus the target surface pane after sending (default: 1)
+let g:cmux_auto_focus = 0
+
 " Automatically press Enter after sending (default: 0)
 let g:cmux_auto_enter = 1
 ```

@@ -81,6 +81,14 @@ g:cmux_cli_name
         The name of the detected AI CLI. Set during auto-detection.
         Value: 'Claude Code' or 'Gemini CLI'
 
+                                                       *g:cmux_auto_focus*
+g:cmux_auto_focus
+        Whether to automatically focus the target surface pane after
+        sending.
+        Default: 1 (enabled)
+>
+        let g:cmux_auto_focus = 0
+<
                                                         *g:cmux_auto_enter*
 g:cmux_auto_enter
         Whether to automatically press Enter after sending.
