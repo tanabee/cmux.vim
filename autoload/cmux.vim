@@ -26,7 +26,8 @@ endfunction
 
 " Auto-detect the surface running AI CLI (Claude Code / Gemini CLI)
 function! cmux#detect()
-  let l:my_surface = $CMUX_SURFACE_ID
+  " Get own surface ref via cmux identify (env var is UUID, tree uses refs)
+  let l:my_surface = cmux#_get_my_surface_ref()
 
   " Get all surface refs via the tree command
   let l:tree_output = system('cmux tree')
@@ -146,6 +147,18 @@ function! cmux#_focus_surface(surface)
       return
     endif
   endfor
+endfunction
+
+" Get own surface ref (e.g. surface:1) from cmux identify
+function! cmux#_get_my_surface_ref()
+  let l:output = system('cmux identify')
+  if v:shell_error == 0
+    let l:ref = matchstr(l:output, 'surface:[0-9]\+')
+    if l:ref !=# ''
+      return l:ref
+    endif
+  endif
+  return $CMUX_SURFACE_ID
 endfunction
 
 " Parse `cmux tree` output into a list of [pane, surface] pairs
