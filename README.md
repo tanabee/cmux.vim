@@ -45,10 +45,10 @@ Open two tabs in cmux — one for Vim and the other for AI CLI (Claude Code or G
 
 | Key | Mode | Action | Example |
 |-----|------|--------|---------|
-| `<C-s>` | Normal | Send file reference | `@src/main.ts ` |
-| `<C-s>` | Visual | Send file + line range | `@src/main.ts:L42-55 ` |
+| `<Leader>c` | Normal | Send file reference | `@src/main.ts ` |
+| `<Leader>c` | Visual | Send file + line range | `@src/main.ts:L42-55 ` |
 
-The default mapping is `<C-s>`, but it can be customized via `<Plug>` mappings (see below).
+The default mapping is `<Leader>c`, but it can be customized via `<Plug>` mappings (see below).
 The AI CLI surface is auto-detected on the first invocation.
 
 ### Commands
@@ -76,12 +76,12 @@ let g:cmux_auto_enter = 1
 
 ## Customizing Key Mappings
 
-If you define `<Plug>` mappings in your `.vimrc`, the default `<C-s>` bindings are automatically disabled.
+If you define `<Plug>` mappings in your `.vimrc`, the default `<Leader>c` bindings are automatically disabled.
 
 ```vim
-nmap <C-\> <Plug>(cmux-send-file)
-nmap <C-g> <Plug>(cmux-send-pos)
-vmap <C-\> <Plug>(cmux-send-range)
+nmap <Leader>c <Plug>(cmux-send-file)
+nmap <Leader>p <Plug>(cmux-send-pos)
+vmap <Leader>c <Plug>(cmux-send-range)
 ```
 
 ## Prerequisites

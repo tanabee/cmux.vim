@@ -21,8 +21,8 @@ vnoremap <Plug>(cmux-send-range) :<C-u>'<,'>CmuxSendRange<CR>
 
 " Default key mappings (only set if not already mapped by user)
 if !hasmapto('<Plug>(cmux-send-file)')
-  nmap <C-s> <Plug>(cmux-send-file)
+  nmap <Leader>c <Plug>(cmux-send-file)
 endif
 if !hasmapto('<Plug>(cmux-send-range)')
-  vmap <C-s> <Plug>(cmux-send-range)
+  vmap <Leader>c <Plug>(cmux-send-range)
 endif
