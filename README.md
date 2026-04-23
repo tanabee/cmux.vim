@@ -23,6 +23,20 @@ Plug 'tanabee/cmux.vim'
 git clone https://github.com/tanabee/cmux.vim.git ~/.vim/pack/plugins/start/cmux.vim
 ```
 
+## Update
+
+### vim-plug
+
+```vim
+:PlugUpdate cmux.vim
+```
+
+### Manual
+
+```bash
+git -C ~/.vim/pack/plugins/start/cmux.vim pull
+```
+
 ## Usage
 
 Open two tabs in cmux — one for Vim and the other for AI CLI (Claude Code or Gemini CLI).

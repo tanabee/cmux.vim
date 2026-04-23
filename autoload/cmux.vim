@@ -25,11 +25,10 @@ function! cmux#send_range(line1, line2)
 endfunction
 
 " Auto-detect the surface running AI CLI (Claude Code / Gemini CLI)
+" by inspecting the processes attached to each surface's tty.
 function! cmux#detect()
-  " Get own surface ref via cmux identify (env var is UUID, tree uses refs)
   let l:my_surface = cmux#_get_my_surface_ref()
 
-  " Get all surface refs via the tree command
   let l:tree_output = system('cmux tree')
   if v:shell_error != 0
     echohl ErrorMsg
@@ -38,30 +37,30 @@ function! cmux#detect()
     return
   endif
 
-  let l:surface_refs = map(cmux#_parse_tree(l:tree_output), 'v:val[1]')
+  for l:entry in cmux#_parse_tree(l:tree_output)
+    let l:sid = l:entry[1]
+    let l:tty = l:entry[2]
 
-  for l:sid in l:surface_refs
-    " Skip own surface
     if l:sid ==# l:my_surface
       continue
     endif
+    if l:tty ==# ''
+      continue
+    endif
 
-    " Read the latest 30 lines from the screen
-    let l:screen = system('cmux read-screen --surface ' . shellescape(l:sid) . ' --lines 30')
+    let l:procs = system('ps -t ' . shellescape(l:tty) . ' -o command=')
     if v:shell_error != 0
       continue
     endif
 
-    " Detect Claude Code specific patterns
-    if l:screen =~# '\vclaude|Claude Code|anthropic|\/help|╭|╰'
+    if l:procs =~# '\v[/ ]claude(-code)?(\s|$)'
       let g:cmux_surface = l:sid
       let g:cmux_cli_name = 'Claude Code'
       echo 'cmux.vim: Detected Claude Code -> ' . l:sid
       return
     endif
 
-    " Detect Gemini CLI specific patterns
-    if l:screen =~# '\vgemini|Gemini|✦'
+    if l:procs =~# '\v[/ ]gemini(\s|$)'
       let g:cmux_surface = l:sid
       let g:cmux_cli_name = 'Gemini CLI'
       echo 'cmux.vim: Detected Gemini CLI -> ' . l:sid
@@ -141,9 +140,9 @@ function! cmux#_focus_surface(surface)
     return
   endif
 
-  for [l:pane, l:sid] in cmux#_parse_tree(l:tree_output)
-    if l:sid ==# a:surface
-      call system('cmux focus-pane --pane ' . shellescape(l:pane))
+  for l:entry in cmux#_parse_tree(l:tree_output)
+    if l:entry[1] ==# a:surface
+      call system('cmux focus-pane --pane ' . shellescape(l:entry[0]))
       return
     endif
   endfor
@@ -153,15 +152,20 @@ endfunction
 function! cmux#_get_my_surface_ref()
   let l:output = system('cmux identify')
   if v:shell_error == 0
-    let l:ref = matchstr(l:output, 'surface:[0-9]\+')
-    if l:ref !=# ''
-      return l:ref
-    endif
+    try
+      let l:json = json_decode(l:output)
+      if type(l:json) == type({}) && has_key(l:json, 'caller')
+            \ && type(l:json.caller) == type({}) && has_key(l:json.caller, 'surface_ref')
+        return l:json.caller.surface_ref
+      endif
+    catch
+    endtry
   endif
   return $CMUX_SURFACE_ID
 endfunction
 
-" Parse `cmux tree` output into a list of [pane, surface] pairs
+" Parse `cmux tree` output into a list of [pane, surface, tty] tuples.
+" tty is the empty string when the surface line has no tty= field.
 function! cmux#_parse_tree(output)
   let l:entries = []
   let l:current_pane = ''
@@ -172,7 +176,8 @@ function! cmux#_parse_tree(output)
     endif
     let l:surface = matchstr(l:line, 'surface:[0-9]\+')
     if l:surface !=# '' && l:current_pane !=# ''
-      call add(l:entries, [l:current_pane, l:surface])
+      let l:tty = matchstr(l:line, 'tty=\zs[A-Za-z0-9/]\+')
+      call add(l:entries, [l:current_pane, l:surface, l:tty])
     endif
   endfor
   return l:entries
